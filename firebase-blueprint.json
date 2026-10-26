@@ -1,0 +1,306 @@
+{
+  "entities": {
+    "PortalConfig": {
+      "title": "PortalConfig",
+      "description": "Public non-PII configuration for the TJKT Department Attendance and Task Tracker.",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "description": "Active application title for Jurusan TJKT."
+        },
+        "schoolName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "description": "Official school name."
+        },
+        "departmentName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "description": "Official department name."
+        },
+        "headOfDepartment": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "description": "Head of TJKT department or coordinator name."
+        },
+        "contactChannel": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 160,
+          "description": "Official support channel for students."
+        },
+        "startDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Start date of the 14-day PJJ monitoring period."
+        },
+        "endDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "End date of the 14-day PJJ monitoring period."
+        },
+        "classes": {
+          "type": "array",
+          "description": "Bounded list of official TJKT class groups (up to 20 classes)."
+        },
+        "subjects": {
+          "type": "array",
+          "description": "Bounded list of TJKT subjects (up to 30 subjects)."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID of the admin who updated the configuration."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of initial config creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest config update."
+        }
+      },
+      "required": [
+        "appName",
+        "schoolName",
+        "departmentName",
+        "headOfDepartment",
+        "contactChannel",
+        "startDate",
+        "endDate",
+        "classes",
+        "subjects",
+        "updatedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RosterStudent": {
+      "title": "RosterStudent",
+      "description": "Official student roster entry per TJKT class managed strictly by Back-End Admin.",
+      "type": "object",
+      "properties": {
+        "nis": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30,
+          "description": "Official student identification number."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Official student full name."
+        },
+        "className": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 30,
+          "description": "TJKT class group name (e.g., X TJKT 1, X TJKT 2, XI TJKT 1)."
+        },
+        "homeroomTeacher": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "description": "Assigned homeroom teacher name for this class."
+        },
+        "activeStatus": {
+          "type": "string",
+          "enum": ["Aktif", "Izin Khusus", "Nonaktif"],
+          "description": "Student active enrollment status."
+        },
+        "createdByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Admin UID who registered this student."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Latest server update timestamp."
+        }
+      },
+      "required": [
+        "nis",
+        "fullName",
+        "className",
+        "homeroomTeacher",
+        "activeStatus",
+        "createdByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AttendanceSubmission": {
+      "title": "AttendanceSubmission",
+      "description": "Student PJJ attendance and JPEG task proof submission created on Front-End and verified in Back-End.",
+      "type": "object",
+      "properties": {
+        "studentUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Authenticated Google UID of the submitting student."
+        },
+        "studentName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Manually entered full name of the student."
+        },
+        "className": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 30,
+          "description": "Selected TJKT class group."
+        },
+        "majorName": {
+          "type": "string",
+          "enum": ["Teknik Jaringan Komputer dan Telekomunikasi (TJKT)"],
+          "maxLength": 100,
+          "description": "Department identifier used for relational scoping."
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Subject name for the PJJ session."
+        },
+        "sessionDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Date of PJJ session (YYYY-MM-DD)."
+        },
+        "weekNumber": {
+          "type": "integer",
+          "enum": [1, 2],
+          "description": "Mapped PJJ week (1 or 2)."
+        },
+        "taskTitle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160,
+          "description": "Topic or assignment title."
+        },
+        "taskProgress": {
+          "type": "string",
+          "enum": ["Belum selesai", "Sedang dikerjakan", "Selesai"],
+          "description": "Self-reported assignment completion status."
+        },
+        "photoDataUrl": {
+          "type": "string",
+          "minLength": 30,
+          "maxLength": 350000,
+          "pattern": "^data:image/jpeg;base64,[A-Za-z0-9+/=]+$",
+          "description": "Compressed JPEG base64 data URL of student work-in-progress."
+        },
+        "photoFileName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "description": "Original filename of uploaded photo."
+        },
+        "learningIssue": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Optional learning obstacle reported by student."
+        },
+        "additionalNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Optional additional note from student."
+        },
+        "verificationStatus": {
+          "type": "string",
+          "enum": [
+            "Sudah Mengumpulkan",
+            "Perlu Verifikasi",
+            "Lengkap",
+            "Perlu Tindak Lanjut"
+          ],
+          "description": "Back-End verification status managed by homeroom teacher/admin."
+        },
+        "teacherNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Back-End teacher verification feedback."
+        },
+        "matchedRosterId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128,
+          "description": "Matched official RosterStudent ID set by Back-End verification."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server submission timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Latest server update timestamp."
+        }
+      },
+      "required": [
+        "studentUid",
+        "studentName",
+        "className",
+        "majorName",
+        "subject",
+        "sessionDate",
+        "weekNumber",
+        "taskTitle",
+        "taskProgress",
+        "photoDataUrl",
+        "photoFileName",
+        "learningIssue",
+        "additionalNote",
+        "verificationStatus",
+        "teacherNote",
+        "matchedRosterId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/portal_config/{configId}": {
+      "schema": "PortalConfig",
+      "description": "Singleton department configuration document (jurusan_tjkt)."
+    },
+    "/roster_students/{rosterId}": {
+      "schema": "RosterStudent",
+      "description": "Official student roster across all TJKT classes managed by Back-End Admin."
+    },
+    "/attendance_submissions/{submissionId}": {
+      "schema": "AttendanceSubmission",
+      "description": "Student attendance and task proof submissions created in Front-End and verified in Back-End."
+    }
+  }
+}

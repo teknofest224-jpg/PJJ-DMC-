@@ -1,0 +1,295 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Reusable Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isSuperAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'teknofest224@gmail.com';
+    }
+
+    // Validation Blueprint 1: PortalConfig
+    function isValidPortalConfig(data) {
+      return data.keys().hasAll([
+          'appName',
+          'schoolName',
+          'departmentName',
+          'headOfDepartment',
+          'contactChannel',
+          'startDate',
+          'endDate',
+          'classes',
+          'subjects',
+          'updatedByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'appName',
+          'schoolName',
+          'departmentName',
+          'headOfDepartment',
+          'contactChannel',
+          'startDate',
+          'endDate',
+          'classes',
+          'subjects',
+          'updatedByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.appName is string && data.appName.size() >= 3 && data.appName.size() <= 120
+        && data.schoolName is string && data.schoolName.size() >= 3 && data.schoolName.size() <= 120
+        && data.departmentName is string && data.departmentName.size() >= 3 && data.departmentName.size() <= 120
+        && data.headOfDepartment is string && data.headOfDepartment.size() <= 100
+        && data.contactChannel is string && data.contactChannel.size() <= 160
+        && data.startDate is string && data.startDate.size() == 10 && data.startDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.endDate is string && data.endDate.size() == 10 && data.endDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.classes is list && data.classes.size() >= 1 && data.classes.size() <= 20 && data.classes[0] is string && data.classes[0].size() <= 30
+        && data.subjects is list && data.subjects.size() >= 1 && data.subjects.size() <= 30 && data.subjects[0] is string && data.subjects[0].size() <= 120
+        && data.updatedByUid is string && data.updatedByUid.size() >= 1 && data.updatedByUid.size() <= 128 && data.updatedByUid == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint 2: RosterStudent
+    function isValidRosterStudent(data) {
+      return data.keys().hasAll([
+          'nis',
+          'fullName',
+          'className',
+          'homeroomTeacher',
+          'activeStatus',
+          'createdByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'nis',
+          'fullName',
+          'className',
+          'homeroomTeacher',
+          'activeStatus',
+          'createdByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.nis is string && data.nis.size() <= 30
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100
+        && data.className is string && data.className.size() >= 2 && data.className.size() <= 30
+        && data.homeroomTeacher is string && data.homeroomTeacher.size() <= 100
+        && data.activeStatus is string && data.activeStatus.size() <= 20 && (data.activeStatus == 'Aktif' || data.activeStatus == 'Izin Khusus' || data.activeStatus == 'Nonaktif')
+        && data.createdByUid is string && data.createdByUid.size() >= 1 && data.createdByUid.size() <= 128 && data.createdByUid == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint 3: AttendanceSubmission
+    function isValidAttendanceSubmission(data) {
+      return data.keys().hasAll([
+          'studentUid',
+          'studentName',
+          'className',
+          'majorName',
+          'subject',
+          'sessionDate',
+          'weekNumber',
+          'taskTitle',
+          'taskProgress',
+          'photoDataUrl',
+          'photoFileName',
+          'learningIssue',
+          'additionalNote',
+          'verificationStatus',
+          'teacherNote',
+          'matchedRosterId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'studentUid',
+          'studentName',
+          'className',
+          'majorName',
+          'subject',
+          'sessionDate',
+          'weekNumber',
+          'taskTitle',
+          'taskProgress',
+          'photoDataUrl',
+          'photoFileName',
+          'learningIssue',
+          'additionalNote',
+          'verificationStatus',
+          'teacherNote',
+          'matchedRosterId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.studentUid is string && data.studentUid.size() >= 1 && data.studentUid.size() <= 128
+        && data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100
+        && data.className is string && data.className.size() >= 2 && data.className.size() <= 30
+        && data.majorName is string && data.majorName.size() <= 100 && data.majorName == 'Teknik Jaringan Komputer dan Telekomunikasi (TJKT)'
+        && data.subject is string && data.subject.size() >= 2 && data.subject.size() <= 120
+        && data.sessionDate is string && data.sessionDate.size() == 10 && data.sessionDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.weekNumber is int && (data.weekNumber == 1 || data.weekNumber == 2)
+        && data.taskTitle is string && data.taskTitle.size() >= 2 && data.taskTitle.size() <= 160
+        && data.taskProgress is string && data.taskProgress.size() <= 30 && (data.taskProgress == 'Belum selesai' || data.taskProgress == 'Sedang dikerjakan' || data.taskProgress == 'Selesai')
+        && data.photoDataUrl is string && data.photoDataUrl.size() >= 30 && data.photoDataUrl.size() <= 350000 && data.photoDataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+        && data.photoFileName is string && data.photoFileName.size() >= 3 && data.photoFileName.size() <= 120
+        && data.learningIssue is string && data.learningIssue.size() <= 500
+        && data.additionalNote is string && data.additionalNote.size() <= 500
+        && data.verificationStatus is string && data.verificationStatus.size() <= 30 && (
+          data.verificationStatus == 'Sudah Mengumpulkan'
+          || data.verificationStatus == 'Perlu Verifikasi'
+          || data.verificationStatus == 'Lengkap'
+          || data.verificationStatus == 'Perlu Tindak Lanjut'
+        )
+        && data.teacherNote is string && data.teacherNote.size() <= 500
+        && data.matchedRosterId is string && data.matchedRosterId.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Collection 1: Singleton Department Configuration (Non-PII)
+    match /portal_config/{configId} {
+      allow get: if isValidId(configId) && configId == 'jurusan_tjkt';
+      allow list: if false;
+      allow create: if isSuperAdmin()
+        && isValidId(configId)
+        && configId == 'jurusan_tjkt'
+        && isValidPortalConfig(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidPortalConfig(incoming())
+        && isSuperAdmin()
+        && isValidId(configId)
+        && configId == 'jurusan_tjkt'
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'appName',
+          'schoolName',
+          'departmentName',
+          'headOfDepartment',
+          'contactChannel',
+          'startDate',
+          'endDate',
+          'classes',
+          'subjects',
+          'updatedByUid',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    // Collection 2: Official TJKT Student Roster (Strictly Isolated to SuperAdmin)
+    match /roster_students/{rosterId} {
+      allow get: if isSuperAdmin() && isValidId(rosterId);
+      allow list: if isSuperAdmin() && existing().createdByUid == request.auth.uid;
+      allow create: if isSuperAdmin()
+        && isValidId(rosterId)
+        && isValidRosterStudent(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidRosterStudent(incoming())
+        && isSuperAdmin()
+        && isValidId(rosterId)
+        && incoming().createdByUid == existing().createdByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'nis',
+          'fullName',
+          'className',
+          'homeroomTeacher',
+          'activeStatus',
+          'updatedAt'
+        ]);
+      allow delete: if isSuperAdmin() && isValidId(rosterId);
+    }
+
+    // Collection 3: Student Attendance & Task Proof Submissions
+    match /attendance_submissions/{submissionId} {
+      allow get: if isVerifiedUser()
+        && isValidId(submissionId)
+        && (existing().studentUid == request.auth.uid || isSuperAdmin());
+      allow list: if isVerifiedUser()
+        && (
+          existing().studentUid == request.auth.uid
+          || (isSuperAdmin() && existing().majorName == 'Teknik Jaringan Komputer dan Telekomunikasi (TJKT)')
+        );
+      allow create: if isVerifiedUser()
+        && isValidId(submissionId)
+        && isValidAttendanceSubmission(incoming())
+        && incoming().studentUid == request.auth.uid
+        && incoming().verificationStatus == 'Sudah Mengumpulkan'
+        && incoming().teacherNote == ''
+        && incoming().matchedRosterId == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidAttendanceSubmission(incoming())
+        && isVerifiedUser()
+        && isValidId(submissionId)
+        && incoming().studentUid == existing().studentUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action 1: Admin Verification & Feedback in Back-End
+          (
+            isSuperAdmin()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'verificationStatus',
+              'teacherNote',
+              'matchedRosterId',
+              'updatedAt'
+            ])
+          )
+          ||
+          // Action 2: Student Proof Revision on Front-End (Blocked once Terminal State 'Lengkap' is reached)
+          (
+            existing().studentUid == request.auth.uid
+            && incoming().studentUid == request.auth.uid
+            && existing().verificationStatus != 'Lengkap'
+            && incoming().verificationStatus == 'Sudah Mengumpulkan'
+            && incoming().teacherNote == existing().teacherNote
+            && incoming().matchedRosterId == existing().matchedRosterId
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'taskProgress',
+              'photoDataUrl',
+              'photoFileName',
+              'learningIssue',
+              'additionalNote',
+              'verificationStatus',
+              'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isSuperAdmin() && isValidId(submissionId);
+    }
+  }
+}
